@@ -129,7 +129,6 @@
         let apiKey = '';
         let currentImageDataUrl = '';
 
-        // Load saved API key on page load
         try {
             apiKey = localStorage.getItem('gradeguru_key') || '';
             if (apiKey) {
@@ -140,22 +139,19 @@
         function saveApiKey() {
             const input = document.getElementById('apiKey');
             const raw = input.value.trim();
-            if (raw.length > 15) {
+            if (raw.length > 15 && raw.startsWith('xai-')) {
                 apiKey = raw;
-                try {
-                    localStorage.setItem('gradeguru_key', apiKey);
-                } catch(e) {}
+                try { localStorage.setItem('gradeguru_key', apiKey); } catch(e) {}
                 input.value = raw.substring(0, 10) + '••••••••';
-                alert('GradeGuru API key saved!');
+                alert('API key saved successfully!');
             } else {
-                alert('Please enter a valid xAI API key');
+                alert('Please enter a valid xAI API key (starts with xai- and longer than 15 chars)');
             }
         }
 
         function handleFileSelect(e) {
             const file = e.target?.files?.[0] || e.dataTransfer?.files?.[0];
             if (!file || !file.type.startsWith('image/')) return;
-
             const reader = new FileReader();
             reader.onload = ev => {
                 currentImageDataUrl = ev.target.result;
@@ -166,13 +162,8 @@
         }
 
         const dropzone = document.getElementById('dropzone');
-        dropzone.addEventListener('dragover', e => {
-            e.preventDefault();
-            dropzone.classList.add('dragover');
-        });
-        dropzone.addEventListener('dragleave', () => {
-            dropzone.classList.remove('dragover');
-        });
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
         dropzone.addEventListener('drop', e => {
             e.preventDefault();
             dropzone.classList.remove('dragover');
@@ -180,71 +171,61 @@
         });
 
         async function gradeHomework() {
-            if (!apiKey) return alert('Please enter and save your xAI API key first');
-            if (!currentImageDataUrl) return alert('Please upload a homework photo first');
+            if (!apiKey) return alert('Enter and save your xAI API key first');
+            if (!currentImageDataUrl) return alert('Upload a homework photo first');
 
             const btn = document.getElementById('gradeBtn');
             const status = document.getElementById('status');
             btn.disabled = true;
-            status.textContent = 'Guru is grading... (this may take 20–60 seconds)';
+            status.textContent = 'Grading... (may take 30-90s)';
 
             try {
                 const base64 = currentImageDataUrl.split(',')[1];
 
-                // ← CHANGE THIS LINE to your Cloudflare Worker URL
-                const proxyUrl = 'https://gradeguru-proxy.Benweeks131@gmail.com.workers.dev';  // ← PUT YOUR REAL URL HERE
+                // ────────────────────────────────────────────────
+                // REPLACE THIS WITH YOUR CLEAN CUSTOM DOMAIN URL
+                const proxyUrl = 'https://proxy.gradeguru.dev';  // ← YOUR NEW URL HERE
+
+                // Safety check to prevent credentials error
+                if (proxyUrl.includes('@') || proxyUrl.includes('workers.dev')) {
+                    throw new Error('Using workers.dev subdomain is blocked by browser security. Please set up a custom domain in Cloudflare (free).');
+                }
 
                 const response = await fetch(proxyUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-xai-key': apiKey                     // we pass the key via custom header
+                        'x-xai-key': apiKey
                     },
                     body: JSON.stringify({
-                        model: "grok-4-1-fast-reasoning",                     // or "grok-4-1-fast-reasoning" if that's still valid
+                        model: "grok-beta",
                         messages: [
-                            {
-                                role: "system",
-                                content: `You are GradeGuru. 
+                            { role: "system", content: `You are GradeGuru. 
 CRITICAL INSTRUCTION: You must calculate the grade as (Correct Answers / Total Problems) * 100.
-
 AUDIT STEPS:
 1. COUNT: Count every single problem on the page (e.g., if there are 30 blanks, Total = 30).
 2. VERIFY: Solve each problem yourself.
 3. COMPARE: Check student's answer. 
 4. TALLY: Count only the Correct answers. 
 5. MATH: Calculate (Tally / Total) * 100. 
-
 Return ONLY JSON:
 {
   "overall_grade": number,
   "letter_grade": "A"|"B"|"C"|"D"|"F",
   "questions": [{"number": "string", "status": "Correct|Incorrect|Partial", "points_earned": number, "points_possible": number, "student_answer": "string", "correct_answer": "string", "feedback": "string"}],
   "general_comment": "string"
-}`
-                            },
-                            {
-                                role: "user",
-                                content: [
-                                    {
-                                        type: "image_url",
-                                        image_url: { url: `data:image/jpeg;base64,${base64}`, detail: "high" }
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "Grade this math practice. There are 30 problems total. Count the correct ones and divide by 30."
-                                    }
-                                ]
-                            }
+}` },
+                            { role: "user", content: [
+                                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}`, detail: "high" } },
+                                { type: "text", text: "Grade this math practice. There are 30 problems total. Count the correct ones and divide by 30." }
+                            ]}
                         ],
                         response_format: { type: "json_object" },
                         temperature: 0
                     })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`Proxy error: ${response.status} ${response.statusText}`);
 
                 const data = await response.json();
                 const result = JSON.parse(data.choices[0].message.content);
@@ -264,10 +245,10 @@ Return ONLY JSON:
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('resultsContent').classList.remove('hidden');
             document.getElementById('originalImg').src = imgSrc;
-            document.getElementById('finalGrade').textContent = `${Math.round(result.overall_grade)}%`;
+            document.getElementById('finalGrade').textContent = `${Math.round(result.overall_grade || 0)}%`;
             
-            const score = result.overall_grade;
-            let letter = result.letter_grade;
+            const score = result.overall_grade || 0;
+            let letter = result.letter_grade || 'F';
             if (score >= 90) letter = "A";
             else if (score >= 80) letter = "B";
             else if (score >= 70) letter = "C";
@@ -276,9 +257,7 @@ Return ONLY JSON:
             
             const circle = document.getElementById('gradeCircle');
             circle.textContent = letter;
-            circle.style.borderColor = (score >= 90) ? '#10b981' :
-                                    (score >= 80) ? '#10b981' :
-                                    (score >= 70) ? '#f59e0b' : '#ef4444';
+            circle.style.borderColor = (score >= 90) ? '#10b981' : (score >= 80) ? '#10b981' : (score >= 70) ? '#f59e0b' : '#ef4444';
 
             const canvas = document.getElementById('gradedCanvas');
             const ctx = canvas.getContext('2d');
@@ -298,17 +277,17 @@ Return ONLY JSON:
 
             const list = document.getElementById('questionList');
             list.innerHTML = '';
-            result.questions.forEach(q => {
+            (result.questions || []).forEach(q => {
                 const color = q.status === 'Correct' ? 'emerald' : q.status === 'Partial' ? 'amber' : 'red';
                 const div = document.createElement('div');
                 div.className = `p-4 rounded-2xl bg-${color}-950/30 border border-${color}-900/50`;
                 div.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
                         <span class="font-bold">Q${q.number}: ${q.status}</span>
-                        <span class="text-xs font-mono text-${color}-400">${q.points_earned}/${q.points_possible} pts</span>
+                        <span class="text-xs font-mono text-${color}-400">${q.points_earned || 0}/${q.points_possible || 1} pts</span>
                     </div>
                     <div class="text-xs text-zinc-500 mb-2">Student: "${q.student_answer || '—'}" | Correct: "${q.correct_answer || '—'}"</div>
-                    <p class="text-sm text-zinc-300">${q.feedback || ''}</p>
+                    <p class="text-sm text-zinc-300">${q.feedback || '(no feedback provided)'}</p>
                 `;
                 list.appendChild(div);
             });
