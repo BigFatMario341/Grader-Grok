@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GradeGuru • AI Homework Grader</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .title { font-family: 'Space Grotesk', sans-serif; }
+        .dropzone { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dropzone.dragover { background-color: #f3e8ff; border-color: #a855f7; }
+        canvas { image-rendering: crisp-edges; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+        #questionList::-webkit-scrollbar { width: 6px; }
+        #questionList::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+    <div class="max-w-6xl mx-auto flex flex-col">
+        <header class="border-b border-zinc-800 bg-zinc-950 px-8 py-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-violet-600 rounded-2xl flex items-center justify-center text-2xl font-bold">G</div>
+                <div>
+                    <h1 class="title text-3xl font-semibold tracking-tight">GradeGuru</h1>
+                    <p class="text-zinc-400 text-sm">Powered by Grok 4.1 Fast Reasoning</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <input id="apiKey" 
+                       type="password" 
+                       placeholder="xai-••••••••"
+                       class="bg-zinc-900 border border-zinc-700 focus:border-violet-500 focus:outline-none rounded-3xl px-5 py-3 text-sm w-80">
+                <button onclick="saveApiKey()" 
+                        class="bg-white text-black px-6 py-3 rounded-3xl font-medium hover:bg-zinc-200 transition">
+                    Save Key
+                </button>
+            </div>
+        </header>
+
+        <div class="flex flex-1 p-8 gap-8">
+            <div class="w-2/5 bg-zinc-900 rounded-3xl p-8 flex flex-col">
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-2">1. Upload Homework Photo</h2>
+                    <p class="text-zinc-400 text-sm">Clear photos help the Guru calculate with 100% accuracy.</p>
+                </div>
+
+                <div id="dropzone"
+                     onclick="document.getElementById('fileInput').click()"
+                     class="dropzone border-2 border-dashed border-zinc-700 hover:border-violet-500 rounded-3xl h-80 flex flex-col items-center justify-center cursor-pointer bg-zinc-950">
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="text-center">
+                        <div class="mx-auto w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center text-4xl mb-4">📸</div>
+                        <p class="font-medium">Drop image or click to upload</p>
+                        <p class="text-xs text-zinc-500 mt-1">JPG / PNG • High Resolution Preferred</p>
+                    </div>
+                </div>
+
+                <div id="previewContainer" class="hidden mt-6">
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-3">Preview</p>
+                    <div class="relative rounded-3xl overflow-hidden border border-zinc-800 bg-black">
+                        <img id="previewImg" class="w-full max-h-64 object-contain" alt="Preview">
+                    </div>
+                </div>
+
+                <button onclick="gradeHomework()"
+                        id="gradeBtn"
+                        class="mt-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 transition-all font-semibold py-6 rounded-3xl text-lg shadow-lg shadow-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed mt-8">
+                    📊 GRADE WITH GURU
+                </button>
+
+                <p id="status" class="text-center text-xs text-zinc-500 mt-4 h-4"></p>
+            </div>
+
+            <div class="flex-1 bg-zinc-900 rounded-3xl p-8 flex flex-col" id="resultsPanel">
+                <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-center">
+                    <div class="text-6xl mb-6 opacity-20">📝</div>
+                    <h3 class="text-2xl font-medium text-zinc-400">Graded homework appears here</h3>
+                    <p class="text-zinc-500 max-w-xs mt-3">GradeGuru checks math, transcribes answers, and detects errors.</p>
+                </div>
+
+                <div id="resultsContent" class="hidden flex-1 flex flex-col">
+                    <div class="grid grid-cols-2 gap-8">
+                        <div>
+                            <p class="uppercase text-xs tracking-widest text-zinc-500 mb-3">Original</p>
+                            <div class="rounded-3xl overflow-hidden border border-zinc-700 bg-black">
+                                <img id="originalImg" class="w-full h-80 object-contain" alt="Original">
+                            </div>
+                        </div>
+                        <div>
+                            <p class="uppercase text-xs tracking-widest text-zinc-500 mb-3">Guru-Graded Analysis</p>
+                            <canvas id="gradedCanvas" class="w-full h-80 rounded-3xl bg-black"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 bg-zinc-950 rounded-3xl p-8 border border-zinc-800">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-emerald-400 text-sm font-medium uppercase tracking-widest">Calculated Score</span>
+                                <div id="finalGrade" class="text-7xl font-bold title tracking-tighter">--%</div>
+                            </div>
+                            <div id="gradeCircle" 
+                                 class="w-28 h-28 rounded-full border-8 border-emerald-400 flex items-center justify-center text-4xl font-bold title">
+                                -
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex-1 overflow-hidden flex flex-col">
+                        <p class="uppercase text-xs tracking-widest text-zinc-500 mb-4">High-Precision Breakdown</p>
+                        <div id="questionList" class="space-y-4 overflow-y-auto pr-2"></div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center">
+                        <div>Powered by GradeGuru AI • Zero-Temperature Logic</div>
+                        <button onclick="resetApp()" class="text-violet-400 hover:text-violet-300 font-medium">Grade Another →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = '';
+        let currentImageDataUrl = '';
+
+        // Load saved API key on page load
+        try {
+            apiKey = localStorage.getItem('gradeguru_key') || '';
+            if (apiKey) {
+                document.getElementById('apiKey').value = apiKey.substring(0, 10) + '••••••••';
+            }
+        } catch (e) {}
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKey');
+            const raw = input.value.trim();
+            if (raw.length > 15) {
+                apiKey = raw;
+                try {
+                    localStorage.setItem('gradeguru_key', apiKey);
+                } catch(e) {}
+                input.value = raw.substring(0, 10) + '••••••••';
+                alert('GradeGuru API key saved!');
+            } else {
+                alert('Please enter a valid xAI API key');
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target?.files?.[0] || e.dataTransfer?.files?.[0];
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = ev => {
+                currentImageDataUrl = ev.target.result;
+                document.getElementById('previewImg').src = currentImageDataUrl;
+                document.getElementById('previewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            handleFileSelect(e);
+        });
+
+        async function gradeHomework() {
+            if (!apiKey) return alert('Please enter and save your xAI API key first');
+            if (!currentImageDataUrl) return alert('Please upload a homework photo first');
+
+            const btn = document.getElementById('gradeBtn');
+            const status = document.getElementById('status');
+            btn.disabled = true;
+            status.textContent = 'Guru is grading... (this may take 20–60 seconds)';
+
+            try {
+                const base64 = currentImageDataUrl.split(',')[1];
+
+                // ← CHANGE THIS LINE to your Cloudflare Worker URL
+                const proxyUrl = 'https://gradeguru-proxy.yourname.workers.dev';  // ← PUT YOUR REAL URL HERE
+
+                const response = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-xai-key': apiKey                     // we pass the key via custom header
+                    },
+                    body: JSON.stringify({
+                        model: "grok-beta",                     // or "grok-4-1-fast-reasoning" if that's still valid
+                        messages: [
+                            {
+                                role: "system",
+                                content: `You are GradeGuru. 
+CRITICAL INSTRUCTION: You must calculate the grade as (Correct Answers / Total Problems) * 100.
+
+AUDIT STEPS:
+1. COUNT: Count every single problem on the page (e.g., if there are 30 blanks, Total = 30).
+2. VERIFY: Solve each problem yourself.
+3. COMPARE: Check student's answer. 
+4. TALLY: Count only the Correct answers. 
+5. MATH: Calculate (Tally / Total) * 100. 
+
+Return ONLY JSON:
+{
+  "overall_grade": number,
+  "letter_grade": "A"|"B"|"C"|"D"|"F",
+  "questions": [{"number": "string", "status": "Correct|Incorrect|Partial", "points_earned": number, "points_possible": number, "student_answer": "string", "correct_answer": "string", "feedback": "string"}],
+  "general_comment": "string"
+}`
+                            },
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "image_url",
+                                        image_url: { url: `data:image/jpeg;base64,${base64}`, detail: "high" }
+                                    },
+                                    {
+                                        type: "text",
+                                        text: "Grade this math practice. There are 30 problems total. Count the correct ones and divide by 30."
+                                    }
+                                ]
+                            }
+                        ],
+                        response_format: { type: "json_object" },
+                        temperature: 0
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const result = JSON.parse(data.choices[0].message.content);
+
+                renderResults(result, currentImageDataUrl);
+
+            } catch (err) {
+                alert(`GradeGuru Error: ${err.message}`);
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                status.textContent = '';
+            }
+        }
+
+        function renderResults(result, imgSrc) {
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultsContent').classList.remove('hidden');
+            document.getElementById('originalImg').src = imgSrc;
+            document.getElementById('finalGrade').textContent = `${Math.round(result.overall_grade)}%`;
+            
+            const score = result.overall_grade;
+            let letter = result.letter_grade;
+            if (score >= 90) letter = "A";
+            else if (score >= 80) letter = "B";
+            else if (score >= 70) letter = "C";
+            else if (score >= 60) letter = "D";
+            else letter = "F";
+            
+            const circle = document.getElementById('gradeCircle');
+            circle.textContent = letter;
+            circle.style.borderColor = (score >= 90) ? '#10b981' :
+                                    (score >= 80) ? '#10b981' :
+                                    (score >= 70) ? '#f59e0b' : '#ef4444';
+
+            const canvas = document.getElementById('gradedCanvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(800 / img.width, 1);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, 0, canvas.width, 80);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 30px "Space Grotesk", sans-serif';
+                ctx.fillText(`GRADEGURU SCORE: ${Math.round(score)}%`, 20, 50);
+            };
+            img.src = imgSrc;
+
+            const list = document.getElementById('questionList');
+            list.innerHTML = '';
+            result.questions.forEach(q => {
+                const color = q.status === 'Correct' ? 'emerald' : q.status === 'Partial' ? 'amber' : 'red';
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-2xl bg-${color}-950/30 border border-${color}-900/50`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold">Q${q.number}: ${q.status}</span>
+                        <span class="text-xs font-mono text-${color}-400">${q.points_earned}/${q.points_possible} pts</span>
+                    </div>
+                    <div class="text-xs text-zinc-500 mb-2">Student: "${q.student_answer || '—'}" | Correct: "${q.correct_answer || '—'}"</div>
+                    <p class="text-sm text-zinc-300">${q.feedback || ''}</p>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function resetApp() {
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('resultsContent').classList.add('hidden');
+            document.getElementById('previewContainer').classList.add('hidden');
+            currentImageDataUrl = '';
+        }
+    </script>
+</body>
+</html>
