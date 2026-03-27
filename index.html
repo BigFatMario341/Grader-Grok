@@ -17,47 +17,59 @@
         .dropzone { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .dropzone.dragover { background-color: #f3e8ff; border-color: #a855f7; }
         canvas { image-rendering: crisp-edges; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
-        #questionList::-webkit-scrollbar { width: 6px; }
+        #questionList::-webkit-scrollbar { width: 4px; }
         #questionList::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+
+        /* Mobile improvements */
+        @media (max-width: 640px) {
+            .grid-cols-2 { grid-template-columns: 1fr !important; }
+            .h-80 { height: 240px !important; }
+            .text-7xl { font-size: 3.5rem; line-height: 1; }
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen">
-    <div class="max-w-6xl mx-auto flex flex-col">
-        <header class="border-b border-zinc-800 bg-zinc-950 px-8 py-6 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto flex flex-col min-h-screen">
+
+        <!-- Header -->
+        <header class="border-b border-zinc-800 bg-zinc-950 px-4 sm:px-6 py-5 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-violet-600 rounded-2xl flex items-center justify-center text-2xl font-bold">G</div>
+                <div class="w-9 h-9 sm:w-10 sm:h-10 bg-violet-600 rounded-2xl flex items-center justify-center text-2xl font-bold">G</div>
                 <div>
-                    <h1 class="title text-3xl font-semibold tracking-tight">GradeGuru</h1>
-                    <p class="text-zinc-400 text-sm">Powered by Grok 4.1 Fast Reasoning</p>
+                    <h1 class="title text-2xl sm:text-3xl font-semibold tracking-tight">GradeGuru</h1>
+                    <p class="text-zinc-400 text-xs sm:text-sm">Powered by Grok 4.1</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
+            
+            <div class="flex items-center gap-3">
                 <input id="apiKey" 
                        type="password" 
                        placeholder="xai-••••••••"
-                       class="bg-zinc-900 border border-zinc-700 focus:border-violet-500 focus:outline-none rounded-3xl px-5 py-3 text-sm w-80">
+                       class="bg-zinc-900 border border-zinc-700 focus:border-violet-500 focus:outline-none rounded-3xl px-4 py-2.5 text-sm w-40 sm:w-80">
                 <button onclick="saveApiKey()" 
-                        class="bg-white text-black px-6 py-3 rounded-3xl font-medium hover:bg-zinc-200 transition">
-                    Save Key
+                        class="bg-white text-black px-5 py-2.5 rounded-3xl font-medium hover:bg-zinc-200 transition text-sm whitespace-nowrap">
+                    Save
                 </button>
             </div>
         </header>
 
-        <div class="flex flex-1 p-8 gap-8">
-            <div class="w-2/5 bg-zinc-900 rounded-3xl p-8 flex flex-col">
-                <div class="mb-8">
-                    <h2 class="text-xl font-semibold mb-2">1. Upload Homework Photo</h2>
-                    <p class="text-zinc-400 text-sm">Clear photos help the Guru calculate with 100% accuracy.</p>
+        <div class="flex-1 p-4 sm:p-8 gap-6 sm:gap-8 flex flex-col lg:flex-row">
+
+            <!-- Upload Panel -->
+            <div class="lg:w-2/5 bg-zinc-900 rounded-3xl p-6 sm:p-8 flex flex-col">
+                <div class="mb-6">
+                    <h2 class="text-lg sm:text-xl font-semibold mb-1">1. Upload Homework Photo</h2>
+                    <p class="text-zinc-400 text-sm">Clear, well-lit photos = most accurate grading</p>
                 </div>
 
                 <div id="dropzone"
                      onclick="document.getElementById('fileInput').click()"
-                     class="dropzone border-2 border-dashed border-zinc-700 hover:border-violet-500 rounded-3xl h-80 flex flex-col items-center justify-center cursor-pointer bg-zinc-950">
+                     class="dropzone border-2 border-dashed border-zinc-700 hover:border-violet-500 rounded-3xl h-64 sm:h-80 flex flex-col items-center justify-center cursor-pointer bg-zinc-950">
                     <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
-                    <div class="text-center">
-                        <div class="mx-auto w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center text-4xl mb-4">📸</div>
-                        <p class="font-medium">Drop image or click to upload</p>
-                        <p class="text-xs text-zinc-500 mt-1">JPG / PNG • High Resolution Preferred</p>
+                    <div class="text-center px-6">
+                        <div class="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-zinc-800 rounded-2xl flex items-center justify-center text-4xl mb-4">📸</div>
+                        <p class="font-medium text-sm sm:text-base">Drop image or tap to upload</p>
+                        <p class="text-xs text-zinc-500 mt-1">JPG / PNG • High resolution recommended</p>
                     </div>
                 </div>
 
@@ -70,55 +82,62 @@
 
                 <button onclick="gradeHomework()"
                         id="gradeBtn"
-                        class="mt-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 transition-all font-semibold py-6 rounded-3xl text-lg shadow-lg shadow-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed mt-8">
+                        class="mt-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 transition-all font-semibold py-5 sm:py-6 rounded-3xl text-base sm:text-lg shadow-lg shadow-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed mt-8">
                     📊 GRADE WITH GURU
                 </button>
 
-                <p id="status" class="text-center text-xs text-zinc-500 mt-4 h-4"></p>
+                <p id="status" class="text-center text-xs text-zinc-500 mt-4 h-5"></p>
             </div>
 
-            <div class="flex-1 bg-zinc-900 rounded-3xl p-8 flex flex-col" id="resultsPanel">
-                <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-center">
-                    <div class="text-6xl mb-6 opacity-20">📝</div>
-                    <h3 class="text-2xl font-medium text-zinc-400">Graded homework appears here</h3>
-                    <p class="text-zinc-500 max-w-xs mt-3">GradeGuru checks math, transcribes answers, and detects errors.</p>
+            <!-- Results Panel -->
+            <div class="flex-1 bg-zinc-900 rounded-3xl p-6 sm:p-8 flex flex-col" id="resultsPanel">
+                <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-center py-12">
+                    <div class="text-5xl sm:text-6xl mb-6 opacity-20">📝</div>
+                    <h3 class="text-xl sm:text-2xl font-medium text-zinc-400">Graded homework appears here</h3>
+                    <p class="text-zinc-500 max-w-xs mt-3 text-sm">Upload a photo and let GradeGuru check every problem.</p>
                 </div>
 
                 <div id="resultsContent" class="hidden flex-1 flex flex-col">
-                    <div class="grid grid-cols-2 gap-8">
+                    <!-- Image Comparison -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
                             <p class="uppercase text-xs tracking-widest text-zinc-500 mb-3">Original</p>
                             <div class="rounded-3xl overflow-hidden border border-zinc-700 bg-black">
-                                <img id="originalImg" class="w-full h-80 object-contain" alt="Original">
+                                <img id="originalImg" class="w-full h-64 sm:h-80 object-contain" alt="Original">
                             </div>
                         </div>
                         <div>
                             <p class="uppercase text-xs tracking-widest text-zinc-500 mb-3">Guru-Graded Analysis</p>
-                            <canvas id="gradedCanvas" class="w-full h-80 rounded-3xl bg-black"></canvas>
+                            <canvas id="gradedCanvas" class="w-full h-64 sm:h-80 rounded-3xl bg-black"></canvas>
                         </div>
                     </div>
 
-                    <div class="mt-8 bg-zinc-950 rounded-3xl p-8 border border-zinc-800">
-                        <div class="flex items-center justify-between">
+                    <!-- Score -->
+                    <div class="mt-8 bg-zinc-950 rounded-3xl p-6 sm:p-8 border border-zinc-800">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
                             <div>
                                 <span class="text-emerald-400 text-sm font-medium uppercase tracking-widest">Calculated Score</span>
-                                <div id="finalGrade" class="text-7xl font-bold title tracking-tighter">--%</div>
+                                <div id="finalGrade" class="text-6xl sm:text-7xl font-bold title tracking-tighter">--%</div>
                             </div>
                             <div id="gradeCircle" 
-                                 class="w-28 h-28 rounded-full border-8 border-emerald-400 flex items-center justify-center text-4xl font-bold title">
+                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-8 border-emerald-400 flex items-center justify-center text-4xl font-bold title flex-shrink-0">
                                 -
                             </div>
                         </div>
                     </div>
 
+                    <!-- Breakdown -->
                     <div class="mt-8 flex-1 overflow-hidden flex flex-col">
                         <p class="uppercase text-xs tracking-widest text-zinc-500 mb-4">High-Precision Breakdown</p>
-                        <div id="questionList" class="space-y-4 overflow-y-auto pr-2"></div>
+                        <div id="questionList" class="space-y-4 overflow-y-auto pr-2 flex-1"></div>
                     </div>
 
-                    <div class="mt-6 pt-6 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center">
+                    <div class="mt-6 pt-6 border-t border-zinc-800 text-xs text-zinc-500 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>Powered by GradeGuru AI • Zero-Temperature Logic</div>
-                        <button onclick="resetApp()" class="text-violet-400 hover:text-violet-300 font-medium">Grade Another →</button>
+                        <button onclick="resetApp()" 
+                                class="text-violet-400 hover:text-violet-300 font-medium flex items-center gap-1">
+                            Grade Another →
+                        </button>
                     </div>
                 </div>
             </div>
@@ -127,8 +146,8 @@
 
     <script>
         let apiKey = '';
-        let currentImageDataUrl = '';        // Original for preview
-        let currentResizedDataUrl = '';      // Compressed version sent to Grok
+        let currentImageDataUrl = '';
+        let currentResizedDataUrl = '';
 
         // Load saved API key
         try {
@@ -145,30 +164,27 @@
                 apiKey = raw;
                 try { localStorage.setItem('gradeguru_key', apiKey); } catch(e) {}
                 input.value = raw.substring(0, 10) + '••••••••';
-                alert('GradeGuru API key saved!');
+                alert('API key saved!');
+            } else {
+                alert('Please enter a valid xAI API key');
             }
         }
 
-        // Resize and compress image (main fix for slow loading on GitHub Pages)
         async function resizeAndCompressImage(file, maxWidth = 1200, quality = 0.82) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
                     let { width, height } = img;
-
                     if (width > maxWidth) {
                         height = Math.round((height * maxWidth) / width);
                         width = maxWidth;
                     }
-
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-
-                    const resizedDataUrl = canvas.toDataURL('image/jpeg', quality);
-                    resolve(resizedDataUrl);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
                 };
                 img.src = URL.createObjectURL(file);
             });
@@ -181,25 +197,25 @@
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 currentImageDataUrl = ev.target.result;
-
-                // Show original preview immediately
                 document.getElementById('previewImg').src = currentImageDataUrl;
                 document.getElementById('previewContainer').classList.remove('hidden');
 
-                // Compress in background
                 const status = document.getElementById('status');
-                status.textContent = 'Compressing image for faster grading...';
+                status.textContent = 'Compressing image...';
                 
                 currentResizedDataUrl = await resizeAndCompressImage(file);
-                
                 status.textContent = 'Image ready ✓';
-                setTimeout(() => { status.textContent = ''; }, 1500);
+                setTimeout(() => status.textContent = '', 1200);
             };
             reader.readAsDataURL(file);
         }
 
+        // Drag & Drop
         const dropzone = document.getElementById('dropzone');
-        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragover', e => { 
+            e.preventDefault(); 
+            dropzone.classList.add('dragover'); 
+        });
         dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
         dropzone.addEventListener('drop', e => {
             e.preventDefault();
@@ -208,28 +224,21 @@
         });
 
         async function gradeHomework() {
-            if (!apiKey) return alert('Please enter your API key');
-            if (!currentResizedDataUrl) return alert('Please upload a homework photo first');
+            if (!apiKey) return alert('Please enter your xAI API key first');
+            if (!currentResizedDataUrl) return alert('Please upload a homework photo');
 
             const btn = document.getElementById('gradeBtn');
             const status = document.getElementById('status');
             btn.disabled = true;
-            status.textContent = 'Sending to Grok • This should be much faster now...';
+            status.textContent = 'Sending to Grok...';
 
             try {
                 const base64 = currentResizedDataUrl.split(',')[1];
 
                 const systemPrompt = `You are GradeGuru. 
-                CRITICAL INSTRUCTION: You must calculate the grade as (Correct Answers / Total Problems) * 100.
-                
-                AUDIT STEPS:
-                1. COUNT: Count every single problem on the page.
-                2. VERIFY: Solve each problem yourself.
-                3. COMPARE: Check student's answer. 
-                4. TALLY: Count only the Correct answers. 
-                5. MATH: Calculate (Tally / Total) * 100. 
-                
-                Return ONLY JSON:
+                CRITICAL: Calculate grade as (Correct Answers / Total Problems) * 100.
+
+                Return ONLY valid JSON with this structure:
                 {
                   "overall_grade": number,
                   "letter_grade": "A"|"B"|"C"|"D"|"F",
@@ -249,7 +258,7 @@
                             { role: "system", content: systemPrompt },
                             { role: "user", content: [
                                 { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}`, detail: "high" } },
-                                { type: "text", text: "Grade this math homework. Count every problem and calculate the exact percentage of correct answers." }
+                                { type: "text", text: "Grade this math homework accurately. Count every problem." }
                             ]}
                         ],
                         response_format: { type: "json_object" },
@@ -257,7 +266,7 @@
                     })
                 });
 
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
                 const result = JSON.parse(data.choices[0].message.content);
@@ -266,7 +275,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert(`GradeGuru Error: ${err.message}`);
+                alert(`Error: ${err.message}`);
             } finally {
                 btn.disabled = false;
                 status.textContent = '';
@@ -288,8 +297,9 @@
 
             const circle = document.getElementById('gradeCircle');
             circle.textContent = letter;
-            circle.style.borderColor = (score >= 70) ? '#10b981' : (score >= 60) ? '#f59e0b' : '#ef4444';
+            circle.style.borderColor = score >= 70 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
 
+            // Draw on canvas
             const canvas = document.getElementById('gradedCanvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
@@ -299,13 +309,14 @@
                 canvas.height = img.height * scale;
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'rgba(0,0,0,0.65)';
-                ctx.fillRect(0, 0, canvas.width, 80);
+                ctx.fillRect(0, 0, canvas.width, 70);
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 28px "Space Grotesk"';
-                ctx.fillText(`GRADEGURU SCORE: ${Math.round(score)}%`, 25, 52);
+                ctx.font = 'bold 24px "Space Grotesk"';
+                ctx.fillText(`GRADEGURU: ${Math.round(score)}%`, 25, 48);
             };
             img.src = imgSrc;
 
+            // Question list
             const list = document.getElementById('questionList');
             list.innerHTML = '';
             (result.questions || []).forEach(q => {
@@ -313,12 +324,12 @@
                 const div = document.createElement('div');
                 div.className = `p-4 rounded-2xl bg-${color}-950/30 border border-${color}-900/50`;
                 div.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold">Q${q.number}: ${q.status}</span>
-                        <span class="text-xs font-mono text-${color}-400">${(q.points_earned || 0)}/${(q.points_possible || 1)} pts</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-sm">Q${q.number}: ${q.status}</span>
+                        <span class="text-xs font-mono text-${color}-400">${(q.points_earned || 0)}/${(q.points_possible || 1)}</span>
                     </div>
                     <div class="text-xs text-zinc-500 mb-2">Student: "${q.student_answer || ''}" | Correct: "${q.correct_answer || ''}"</div>
-                    <p class="text-sm text-zinc-300">${q.feedback || 'No additional feedback.'}</p>
+                    <p class="text-sm text-zinc-300">${q.feedback || 'No feedback provided.'}</p>
                 `;
                 list.appendChild(div);
             });
@@ -331,6 +342,9 @@
             currentImageDataUrl = '';
             currentResizedDataUrl = '';
         }
+
+        // Touch-friendly improvements
+        document.addEventListener('touchstart', function(){}, {passive: true});
     </script>
 </body>
 </html>
