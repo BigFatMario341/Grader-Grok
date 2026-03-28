@@ -37,7 +37,7 @@
                 <div class="w-9 h-9 sm:w-10 sm:h-10 bg-violet-600 rounded-2xl flex items-center justify-center text-2xl font-bold">G</div>
                 <div>
                     <h1 class="title text-2xl sm:text-3xl font-semibold tracking-tight">GradeGuru</h1>
-                    <p class="text-zinc-400 text-xs sm:text-sm">Powered by Grok 4.1</p>
+                    <p class="text-zinc-400 text-xs sm:text-sm">AI Homework Grader</p>
                 </div>
             </div>
             
@@ -59,7 +59,14 @@
             <div class="lg:w-2/5 bg-zinc-900 rounded-3xl p-6 sm:p-8 flex flex-col">
                 <div class="mb-6">
                     <h2 class="text-lg sm:text-xl font-semibold mb-1">1. Upload Homework Photo</h2>
-                    <p class="text-zinc-400 text-sm">Clear, well-lit photos = most accurate grading</p>
+                    <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 text-sm space-y-3">
+                        <p class="font-medium text-emerald-400">For best results:</p>
+                        <ol class="text-zinc-300 space-y-2 list-decimal pl-5">
+                            <li>Hold your phone <strong>90 degrees (straight down)</strong> over the homework</li>
+                            <li>Take a clear, well-lit photo of the entire page</li>
+                        </ol>
+                        <p class="text-xs text-zinc-500">Make sure all problems are visible and well-focused.</p>
+                    </div>
                 </div>
 
                 <div id="dropzone"
@@ -133,7 +140,7 @@
                     </div>
 
                     <div class="mt-6 pt-6 border-t border-zinc-800 text-xs text-zinc-500 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div>Powered by GradeGuru AI • Zero-Temperature Logic</div>
+                        <div>GradeGuru AI • Zero-Temperature Logic</div>
                         <button onclick="resetApp()" 
                                 class="text-violet-400 hover:text-violet-300 font-medium flex items-center gap-1">
                             Grade Another →
