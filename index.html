@@ -20,7 +20,6 @@
         #questionList::-webkit-scrollbar { width: 4px; }
         #questionList::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
 
-        /* Mobile improvements */
         @media (max-width: 640px) {
             .grid-cols-2 { grid-template-columns: 1fr !important; }
             .h-80 { height: 240px !important; }
@@ -41,15 +40,8 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-3">
-                <input id="apiKey" 
-                       type="password" 
-                       placeholder="xai-••••••••"
-                       class="bg-zinc-900 border border-zinc-700 focus:border-violet-500 focus:outline-none rounded-3xl px-4 py-2.5 text-sm w-40 sm:w-80">
-                <button onclick="saveApiKey()" 
-                        class="bg-white text-black px-5 py-2.5 rounded-3xl font-medium hover:bg-zinc-200 transition text-sm whitespace-nowrap">
-                    Save
-                </button>
+            <div class="text-emerald-400 text-sm font-medium flex items-center gap-2">
+                ✅ API Key Pre-loaded
             </div>
         </header>
 
@@ -152,30 +144,11 @@
     </div>
 
     <script>
-        let apiKey = '';
+        // === HARDCODED API KEY ===
+        const API_KEY = "xai-lbdiDpuoj3qfoQMWCW4LpI963oQznJKDwhbL5yvvlstkm5d7Gc535d0SUmVGTx0lFiOPTofKV9ef5ZWa";
+
         let currentImageDataUrl = '';
         let currentResizedDataUrl = '';
-
-        // Load saved API key
-        try {
-            apiKey = localStorage.getItem('gradeguru_key') || '';
-            if (apiKey) {
-                document.getElementById('apiKey').value = apiKey.substring(0, 10) + '••••••••';
-            }
-        } catch (e) {}
-
-        function saveApiKey() {
-            const input = document.getElementById('apiKey');
-            const raw = input.value.trim();
-            if (raw.length > 15) {
-                apiKey = raw;
-                try { localStorage.setItem('gradeguru_key', apiKey); } catch(e) {}
-                input.value = raw.substring(0, 10) + '••••••••';
-                alert('API key saved!');
-            } else {
-                alert('Please enter a valid xAI API key');
-            }
-        }
 
         async function resizeAndCompressImage(file, maxWidth = 1200, quality = 0.82) {
             return new Promise((resolve) => {
@@ -231,8 +204,9 @@
         });
 
         async function gradeHomework() {
-            if (!apiKey) return alert('Please enter your xAI API key first');
-            if (!currentResizedDataUrl) return alert('Please upload a homework photo');
+            if (!currentResizedDataUrl) {
+                return alert('Please upload a homework photo first');
+            }
 
             const btn = document.getElementById('gradeBtn');
             const status = document.getElementById('status');
@@ -257,7 +231,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'Authorization': `Bearer ${API_KEY}`
                     },
                     body: JSON.stringify({
                         model: "grok-4-1-fast-reasoning",
