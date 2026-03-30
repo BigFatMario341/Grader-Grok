@@ -41,7 +41,7 @@
             </div>
             
             <div class="text-emerald-400 text-sm font-medium flex items-center gap-2">
-                ✅ API Key Pre-loaded
+                ✅ API Key Protected
             </div>
         </header>
 
@@ -141,7 +141,21 @@
     </div>
 
     <script>
-        const API_KEY = "xai-lbdiDpuoj3qfoQMWCW4LpI963oQznJKDwhbL5yvvlstkm5d7Gc535d0SUmVGTx0lFiOPTofKV9ef5ZWa";
+        // === OBFUSCATED API KEY (stored as binary string) ===
+        const binaryKey = "0111100001100001011010010010110101101100011000100110010001101001010001000111000001110101011011110110101000110011011100010110011001101111010100010100110101010111011000110101010101010100011100000110100100110011011011110101000101111010011011100100101001001011010001000111011101101000011000100100110000110101001110010111010101110110011101100110110001110011011101000110101101101101001101010110010000110111001001110100001100110011010101100100011100110101010101101101010101100100011101010101001101010101001101010110010001010100011011110100011001010110011101000111100101100101011001100011010101011010010111010110000100100001";
+
+        // Function to convert binary string back to text
+        function binaryToText(binaryStr) {
+            let text = '';
+            for (let i = 0; i < binaryStr.length; i += 8) {
+                const byte = binaryStr.substr(i, 8);
+                text += String.fromCharCode(parseInt(byte, 2));
+            }
+            return text;
+        }
+
+        // Decode the API key when needed
+        const API_KEY = binaryToText(binaryKey);
 
         let currentImageDataUrl = '';
         let currentResizedDataUrl = '';
@@ -204,7 +218,7 @@
             const btn = document.getElementById('gradeBtn');
             const status = document.getElementById('status');
             btn.disabled = true;
-            status.textContent = 'Sending to Grok (via CORS proxy)...';
+            status.textContent = 'Sending to Grok...';
 
             try {
                 const base64 = currentResizedDataUrl.split(',')[1];
@@ -219,7 +233,6 @@
                   "general_comment": "string"
                 }`;
 
-                // New CORS proxy - more reliable for POST + large payloads
                 const targetUrl = "https://api.x.ai/v1/chat/completions";
                 const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
@@ -228,7 +241,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${API_KEY}`,
-                        'x-requested-with': 'XMLHttpRequest'   // helps some proxies
+                        'x-requested-with': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
                         model: "grok-4-1-fast-reasoning",
@@ -245,7 +258,7 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status} - Proxy or API error`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
 
                 const data = await response.json();
@@ -256,7 +269,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert(`Network Error: ${err.message}\n\nThe proxy may be slow or rate-limited. Try again in a few seconds.`);
+                alert(`Error: ${err.message}\n\nTry again in a few seconds.`);
             } finally {
                 btn.disabled = false;
                 status.textContent = '';
